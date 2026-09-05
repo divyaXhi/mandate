@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.save
+data/audit-log.json
+data/customers.json
+public/audits/
+public/receipts/
+*.log
+.DS_Store
+calibration/data/creditcard.csv
+calibration/reliability_chart.png
+calibration/calibration_report.txt

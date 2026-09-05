@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayMandate — Agentic Commerce, Safely</title>
+<!-- Local stylesheets only. Nothing in the critical path may come from a CDN:
+     a render-blocking third-party <link> means that on bad venue wifi the browser
+     paints the body background and nothing else, which is indistinguishable from
+     a broken build. Fonts are a system stack (see --font-display in style.css). -->
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="control.css">
+<!-- Leaflet styles the address map only. Loaded non-blocking: `media="print"` keeps
+     it out of the first paint, and the onload flip applies it once it arrives. If it
+     never arrives, the map degrades to typed address entry and the demo continues. -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
+</head>
+<body>
+
+<!-- Address picker modal (map-based, Zomato/Swiggy-style pin drop) -->
+<div class="modal-backdrop" id="addressModalBackdrop" hidden>
+  <div class="modal address-modal" role="dialog" aria-label="Choose delivery address" aria-modal="true">
+    <div class="modal-header">
+      <span>Drop a pin for the delivery address</span>
+      <button class="ghost-btn" id="closeAddressModalBtn">Cancel</button>
+    </div>
+    <div id="addressMap" class="address-map"></div>
+    <div class="address-form">
+      <div class="address-hint" id="addressHint">Click anywhere on the map, or search below.</div>
+      <div class="address-search-row">
+        <input type="text" id="addressSearchInput" placeholder="Search a place or locality…" autocomplete="off">
+        <button type="button" class="address-locate-btn" id="useMyLocationBtn">⌖ Use my location</button>
+      </div>
+      <div class="address-fields">
+        <input type="text" id="addressLine" placeholder="Address line (edit if needed)">
+        <input type="text" id="addressPincode" inputmode="numeric" maxlength="6" placeholder="6-digit pincode" aria-label="Delivery pincode">
+      </div>
+      <button class="hero-cta address-confirm-btn" id="confirmAddressBtn" disabled>Confirm this address</button>
+    </div>
+  </div>
+</div>
+
+<div class="console" id="mainConsole">
+
+  <!-- HOME is an independent, shopping-first DOM surface. It deliberately has
+       no technical navigation, dashboard chrome, or pipeline sidebar. -->
+  <section class="mandate-home surface surface-buy" data-surface="buy">
+    <header class="mandate-chat-header">
+      <span class="chat-back" aria-hidden="true">←</span>
+      <button type="button" class="phone-avatar agent-profile-btn razorpay-avatar" id="agentProfileBtn" aria-label="Open Mandate profile and Razorpay payment-rail details" title="Mandate · Razorpay TEST payment rail"><img src="assets/razorpay-payment-mark.png" alt="" aria-hidden="true"></button>
+      <div class="phone-status-text"><span class="phone-name">Mandate</span><span class="phone-online"><span class="phone-status-dot" aria-hidden="true"></span>AI Shopping Agent · online</span></div>
+      <button type="button" class="inspect-btn" id="inspectBtn">🔐 Inspect</button>
+    </header>
+    <main class="mandate-chat-main">
+      <div class="today-divider">TODAY</div>
+      <section class="chat-panel" aria-label="Agent chat">
+        <div class="phone-frame">
+          <section class="commerce-brief" id="commerceBrief" aria-live="polite"><div class="commerce-brief-kicker">🔐 YOUR PURCHASE RULES</div><div class="commerce-brief-copy">PayMandate protects every purchase you approve.</div></section>
+          <div class="chat-scroll" id="chatScroll" aria-live="polite"></div>
+          <form class="chat-input-row" id="chatForm"><span class="composer-attach" aria-hidden="true">⌕</span><input type="text" id="chatInput" placeholder="Message Mandate..." autocomplete="off" aria-label="Message Mandate"><button type="submit" id="sendBtn" aria-label="Send">➤</button></form>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <!-- The complete existing technical product is structurally separate from
+       Home and is mounted only after the explicit Inspect action. -->
+  <section id="controlShell" class="paymandate-control" hidden aria-label="PayMandate Control">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">⟐</span><span class="brand-name">PAYMANDATE INSPECT</span></div>
+    <div class="topbar-meta"><button class="ghost-btn" id="backToChatBtn">← Back to Mandate</button><button class="ghost-btn" id="featuresBtn">All capabilities</button><button class="ghost-btn" id="dashboardBtn">Dashboards</button><button class="ghost-btn attack-mode-btn" id="attackModeBtn">Security Lab</button><button type="button" class="chain-deeplink" data-goto="control">Control Center</button></div>
+  </header>
+  <nav class="navbar" role="tablist" aria-label="PayMandate Control surfaces">
+    <button type="button" class="nav-tab" data-goto="control" role="tab" aria-selected="false">
+      <span class="nav-tab-name">🧭 TRANSACTION</span>
+      <span class="nav-tab-sub">request, product, deal, journey</span>
+      <span class="nav-tab-badge" data-badge="control" hidden></span>
+    </button>
+    <button type="button" class="nav-tab" data-goto="security" role="tab" aria-selected="false">
+      <span class="nav-tab-name">🔐 SECURITY</span>
+      <span class="nav-tab-sub">mandate and attack protection</span>
+    </button>
+    <button type="button" class="nav-tab" data-goto="payments" role="tab" aria-selected="false">
+      <span class="nav-tab-name">💳 PAYMENT</span>
+      <span class="nav-tab-sub">guard, Razorpay, recovery</span>
+    </button>
+    <button type="button" class="nav-tab" data-goto="audit" role="tab" aria-selected="false">
+      <span class="nav-tab-name">📜 AUDIT</span>
+      <span class="nav-tab-sub">timeline, trace, replay, downloads</span>
+    </button>
+    <button type="button" class="nav-tab" data-goto="business" role="tab" aria-selected="false">
+      <span class="nav-tab-name">🛡 AUTHORIZATION</span>
+      <span class="nav-tab-sub">trust, risk, policy, approval</span>
+    </button>
+    <div class="nav-spacer"></div>
+    <button type="button" class="nav-mode-btn" id="modeToggleBtn" title="Changes detail only. It never changes approval, policy, or payment.">○ Normal Mode</button>
+  </nav>
+  <div class="mode-explainer" id="modeExplainer">Normal Mode: compact customer view. Switch to Judge Mode for full technical evidence. It is presentation only and cannot change an outcome, approval, or payment.</div>
+
+  <!-- Features overview modal -->
+  <div class="modal-backdrop" id="featuresModalBackdrop" hidden>
+    <div class="modal features-modal" role="dialog" aria-label="All features" aria-modal="true">
+      <div class="modal-header">
+        <span>Everything this build does</span>
+        <button class="ghost-btn" id="closeFeaturesBtn">Close</button>
+      </div>
+      <div class="features-body" id="featuresBody"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard modal -->
+  <div class="modal-backdrop" id="dashboardModalBackdrop" hidden>
+    <div class="modal dashboard-modal" role="dialog" aria-label="Dashboards" aria-modal="true">
+      <div class="modal-header">
+        <span>Dashboards</span>
+        <button class="ghost-btn" id="closeDashboardBtn">Close</button>
+      </div>
+      <div class="dashboard-tabs">
+        <button type="button" class="dashboard-tab active" data-tab="buyer">Buyer</button>
+        <button type="button" class="dashboard-tab" data-tab="merchant">Merchant</button>
+        <button type="button" class="dashboard-tab" data-tab="simulator">Revenue Simulator</button>
+      </div>
+      <div class="dashboard-body" id="dashboardBody">Loading…</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="agentModalBackdrop" hidden>
+    <div class="modal agent-modal" role="dialog" aria-label="Mandate agent identity" aria-modal="true">
+      <div class="modal-header"><span>🤖 Mandate — AI Shopping Agent</span><button class="ghost-btn" id="closeAgentModalBtn">Close</button></div>
+      <div class="agent-modal-body" id="agentModalBody">Loading agent permissions…</div>
+    </div>
+  </div>
+
+  <!-- ============================================================ CONTROL -->
+  <section class="surface surface-scroll" data-surface="control" hidden>
+    <div class="cc-shell">
+
+      <div class="cc-top">
+        <div class="cc-top-status" id="ccStatus"></div>
+        <div class="cc-top-actions">
+          <button type="button" class="ghost-btn" id="ccUnpinBtn" title="Stop inspecting one stage and follow the live transaction again">↺ Follow live transaction</button>
+        </div>
+      </div>
+      <!-- Compatibility bridge for the older six-stage chat renderer. These
+           nodes are intentionally inside PayMandate Control, never Home. -->
+      <div class="control-evidence-bridge" hidden>
+        <div id="mobileStrip"></div><ol id="chainList"><li data-stage="intent"></li><li data-stage="cart"></li><li data-stage="trust"></li><li data-stage="approval"></li><li data-stage="payment"></li><li data-stage="audit"></li></ol>
+        <span id="detail-intent"></span><span id="detail-cart"></span><span id="detail-trust"></span><span id="detail-approval"></span><span id="detail-payment"></span><span id="detail-audit"></span><div id="scoreBarTrack"><div id="scoreBarFill"></div></div><ul id="signalList"></ul>
+        <button id="trailBtn" type="button">Trace</button><div id="mandatePanel"></div><ul id="transactionsList"></ul>
+      </div>
+
+      <!-- The §15 split screen. Rendered whenever there is a scored deal, never
+           hidden behind an interaction — it is the whole argument in one frame. -->
+      <div class="cc-contrast" id="ccContrast" hidden></div>
+
+      <!-- One deterministic resolution across Trust, Risk, and Policy. -->
+      <div class="cc-decision" id="ccDecision" hidden></div>
+
+      <div class="cc-grid">
+        <div class="cc-rail-col">
+          <div class="cc-col-head">
+            <span class="cc-col-title">Every stage</span>
+            <span class="cc-col-hint">click any one to see what it decided</span>
+          </div>
+          <div class="cc-rail" id="ccRail"></div>
+        </div>
+        <div class="cc-panel-col">
+          <div class="cc-panel" id="ccPanel"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================== SECURITY -->
+  <section class="surface surface-scroll" data-surface="security" hidden>
+    <div class="cc-shell">
+      <div class="cc-surface-head">
+        <h2>Live Security</h2>
+        <p>Every active purchase passes these real checks before the payment rail. Security Lab below is an optional safe attack test; it never creates an order.</p>
+      </div>
+
+      <div class="security-product-path"><span>Product</span><b>↓</b><span>Trust + Risk</span><b>↓</b><span>Rules</span><b>↓</b><span>Your approval</span><b>↓</b><strong>Payment Guard</strong></div>
+      <div id="securityTransaction" class="security-transaction" aria-live="polite"></div>
+
+      <!-- Attack Mode panel -->
+      <div class="attack-panel" id="attackPanel">
+        <div class="attack-panel-header">
+          <span>⚠ Security Lab — optional safe attack tests against the same live policy and payment guards. Payment not executed.</span>
+          <button class="ghost-btn" id="closeAttackPanelBtn">Back to chat</button>
+        </div>
+        <div class="attack-buttons">
+          <button type="button" class="attack-btn attack-suite-btn" id="runSecuritySuiteBtn">Run Security Suite</button>
+          <button type="button" class="attack-btn" data-attack="prompt_injection">Prompt Injection</button>
+          <button type="button" class="attack-btn" data-attack="price_manipulation">Price Manipulation</button>
+          <button type="button" class="attack-btn" data-attack="mandate_violation">Mandate Violation</button>
+          <button type="button" class="attack-btn" data-attack="fake_merchant">Fake Merchant</button>
+          <button type="button" class="attack-btn" data-attack="duplicate_payment">Test duplicate-payment block</button>
+          <button type="button" class="attack-btn" data-attack="stale_deal">Stale Deal</button>
+          <button type="button" class="attack-btn" data-attack="network_failure">Network Failure</button>
+          <button type="button" class="attack-btn" data-attack="agent_permission_violation">Agent Permission Violation</button>
+        </div>
+        <div class="attack-log" id="attackLog"></div>
+      </div>
+
+      <div class="security-level-grid" aria-label="Security levels on every purchase">
+        <article><b>1</b><div><strong>Catalog truth</strong><span>Price comes from a product record, never chat text.</span></div></article>
+        <article><b>2</b><div><strong>Trust &amp; risk</strong><span>Merchant signals and suspicious activity are evaluated.</span></div></article>
+        <article><b>3</b><div><strong>Deal recheck</strong><span>Price, merchant and deal fingerprint must still match.</span></div></article>
+        <article><b>4</b><div><strong>Mandate &amp; approval</strong><span>Your limits apply and only you can approve.</span></div></article>
+        <article><b>5</b><div><strong>Payment Guard</strong><span>Stops duplicates and unsafe payments before Razorpay.</span></div></article>
+        <article><b>6</b><div><strong>Audit trail</strong><span>Each decision is recorded for receipt and review.</span></div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== PAYMENTS -->
+  <section class="surface surface-scroll" data-surface="payments" hidden>
+    <div class="cc-shell">
+      <div class="cc-surface-head">
+        <h2>Payments</h2>
+        <p>Six pre-flight checks run in the instant before the Razorpay rail is touched. If any critical one fails, no order is created — so there is nothing to refund, reverse, or explain away.</p>
+      </div>
+      <div id="paymentsSurfaceBody"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================== AUDIT -->
+  <section class="surface surface-scroll" data-surface="audit" hidden>
+    <div class="cc-shell">
+      <div class="cc-surface-head">
+        <h2>Audit</h2>
+        <p>Written as decisions happen, grouped by the stage that wrote each entry. Append-only: nothing here is edited after the fact, which is what separates a log from a summary.</p>
+      </div>
+      <div id="auditSurfaceBody"></div>
+    </div>
+  </section>
+
+  <!-- =========================================================== BUSINESS -->
+  <section class="surface surface-scroll" data-surface="business" hidden>
+    <div class="cc-shell">
+      <div class="cc-surface-head">
+        <h2>Authorization</h2>
+        <p>PayMandate records Trust, Risk, Policy, the canonical decision, and your approval as separate facts. This view explains an outcome; it cannot change one.</p>
+      </div>
+      <div id="businessSurfaceBody"></div>
+    </div>
+  </section>
+
+</section>
+</div>
+
+<!-- Audit trail modal -->
+<div class="modal-backdrop" id="trailModalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-label="Audit trail" aria-modal="true">
+    <div class="modal-header">
+      <span>Audit trail — <span id="trailTxnId" class="mono"></span></span>
+      <button class="ghost-btn" id="closeTrailBtn">Close</button>
+    </div>
+    <ol class="trail-timeline" id="trailTimeline"></ol>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="passportModalBackdrop" hidden>
+  <div class="modal passport-modal" role="dialog" aria-label="Transaction Passport" aria-modal="true">
+    <div class="modal-header"><span>PAYMANDATE · TRANSACTION PASSPORT</span><button class="ghost-btn" id="closePassportBtn">Close</button></div>
+    <div class="passport-body" id="passportBody">Loading append-only evidence…</div>
+  </div>
+</div>
+
+<!-- Our own scripts FIRST, and no `defer`, so the app boots the moment the document
+     is parsed. Previously leaflet and the Razorpay checkout sat ahead of these: a
+     hanging CDN meant app.js never executed and "Start the demo" did nothing at all.
+     A third-party script must never be able to stop this app from starting. -->
+<script src="app.js"></script>
+<script src="control.js"></script>
+
+<!-- Third-party, both deferred and both optional at boot. Leaflet is only touched
+     when the address modal opens; Razorpay only at checkout. Each call site guards
+     for its global being absent. -->
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script defer src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</body>
+</html>

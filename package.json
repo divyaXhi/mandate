@@ -1,0 +1,39 @@
+{
+  "name": "paymandate",
+  "version": "1.0.0",
+  "description": "A safety and authorization layer for agentic commerce",
+  "private": true,
+  "main": "src/server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "NODE_ENV=development node src/server.js",
+    "start": "node src/server.js",
+    "server": "node src/server.js",
+    "check:pipeline": "NODE_ENV=test node test/verify-pipeline.js",
+    "check:negotiation": "NODE_ENV=test node test/verify-negotiation.js",
+    "check:decision": "NODE_ENV=test node test/verify-decision.js",
+    "check:security": "NODE_ENV=test node test/verify-security.js",
+    "check:demo": "NODE_ENV=test node test/verify-demo.js",
+    "check:reliability": "NODE_ENV=test node test/verify-reliability.js",
+    "check:observability": "NODE_ENV=test node test/verify-observability.js",
+    "check:product": "NODE_ENV=test node test/verify-product.js",
+    "check:conversation": "NODE_ENV=test node test/verify-conversation.js",
+    "check:checkout": "NODE_ENV=test node test/verify-checkout.js",
+    "check:experience": "NODE_ENV=test node test/verify-experience.js",
+    "demo": "NODE_ENV=demo DEMO_MODE=true node src/server.js",
+    "demo:check": "NODE_ENV=demo DEMO_MODE=true node test/demo-preflight.js",
+    "test:e2e": "NODE_ENV=test node test/e2e-negotiation.js",
+    "test": "npm run check:pipeline && npm run check:negotiation && npm run check:decision && npm run check:security && npm run check:demo && npm run check:reliability && npm run check:observability && npm run check:product && npm run check:conversation && npm run check:checkout && npm run check:experience && npm run test:e2e",
+    "calibrate": "python3 calibration/calibrate.py"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pdfkit": "^0.20.1",
+    "razorpay": "^2.9.4",
+    "uuid": "^9.0.1"
+  }
+}

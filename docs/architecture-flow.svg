@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="190" viewBox="0 0 900 190" role="img" aria-labelledby="title desc">
+  <title id="title">PayMandate authorization flow</title><desc id="desc">A shopping agent proposes a deal. Independent controls authorize it before payment and audit.</desc>
+  <rect width="900" height="190" fill="#0f1729" rx="14"/>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <g fill="#172038" stroke="#38507d" stroke-width="2"><rect x="28" y="60" width="132" height="64" rx="9"/><rect x="212" y="60" width="150" height="64" rx="9"/><rect x="414" y="36" width="174" height="112" rx="9"/><rect x="640" y="60" width="110" height="64" rx="9"/><rect x="802" y="60" width="70" height="64" rx="9"/></g>
+    <g fill="#e8e6de" font-size="15" font-weight="700"><text x="94" y="86">User</text><text x="287" y="86">Mandate</text><text x="501" y="65">PayMandate</text><text x="695" y="86">Approval</text><text x="837" y="86">Rail</text></g>
+    <g fill="#a8acc0" font-size="11"><text x="94" y="105">request</text><text x="287" y="105">discover · negotiate</text><text x="501" y="91">trust · risk · policy</text><text x="501" y="110">payment guard · audit</text><text x="695" y="105">explicit consent</text><text x="837" y="105">Razorpay</text></g>
+    <g stroke="#c9a24b" stroke-width="3" fill="none"><path d="M160 92h42m-10-8 10 8-10 8M362 92h42m-10-8 10 8-10 8M588 92h42m-10-8 10 8-10 8M750 92h42m-10-8 10 8-10 8"/></g>
+  </g>
+</svg>

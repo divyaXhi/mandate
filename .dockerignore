@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.save
+.git
+outputs
+data/audit-log.json
+data/customers.json
+public/audits
+public/receipts
