@@ -1,5 +1,10 @@
 # PayMandate
 
+## 🚀 Live Demo
+https://mandate-ayua.onrender.com
+
+**Note:** Hosted on Render's free tier — if the app has been idle, the first load may take 30-50 seconds to wake up.
+
 **PayMandate is a safety and authorization layer for agentic commerce.** It lets a shopping agent discover and negotiate a deal while an independent backend decides whether that exact deal may be approved and sent to a payment rail.
 
 The project answers a simple question: *how can an AI help someone buy something without becoming an unbounded financial actor?*
